@@ -151,8 +151,9 @@
 <body>
     <div id="topbar">
         <div class="wad-btns">
-            <button class="btn active" id="btn-fd1" onclick="selectGame('fd1')">Часть 1</button>
-            <button class="btn" id="btn-fd2" onclick="selectGame('fd2')">Часть 2</button>
+            <button class="btn active" id="btn-doom1" onclick="selectGame('doom1')">DOOM 1 (1993)</button>
+            <button class="btn" id="btn-fd1" onclick="selectGame('fd1')">Freedoom 1</button>
+            <button class="btn" id="btn-fd2" onclick="selectGame('fd2')">Freedoom 2</button>
         </div>
         <div id="key-indicator">⌨️ Готов к бою</div>
         <div class="controls-hint">
@@ -318,12 +319,13 @@
             window.dispatchEvent(ev);
         }
 
-        var selectedMode = 'fd1';
+        var selectedMode = 'doom1';
         if (window.location.hash) {
             var h = window.location.hash.substring(1);
-            if (h === 'fd1' || h === 'fd2') selectedMode = h;
+            if (h === 'doom1' || h === 'fd1' || h === 'fd2') selectedMode = h;
         }
 
+        document.getElementById('btn-doom1').classList.toggle('active', selectedMode === 'doom1');
         document.getElementById('btn-fd1').classList.toggle('active', selectedMode === 'fd1');
         document.getElementById('btn-fd2').classList.toggle('active', selectedMode === 'fd2');
 
@@ -335,7 +337,10 @@
         var Module = {
             canvas: canvas,
             preRun: [function() {
-                if (selectedMode === 'fd2') {
+                if (selectedMode === 'doom1') {
+                    console.log('Preloading doom1.wad as /doom.wad (DOOM 1 Shareware 1993)...');
+                    FS.createPreloadedFile('/', 'doom.wad', 'doom1.wad', true, false);
+                } else if (selectedMode === 'fd2') {
                     console.log('Preloading freedoom2.wad as /doom2.wad...');
                     FS.createPreloadedFile('/', 'doom2.wad', 'freedoom2.wad', true, false);
                 } else {
@@ -344,7 +349,7 @@
                 }
             }],
             postRun: [function() {
-                console.log('Freedoom initialized successfully with factory defaults!');
+                console.log('DOOM engine initialized successfully!');
                 if (canvas) canvas.focus();
             }],
             print: function(text) { console.log('[DOOM]', text); },

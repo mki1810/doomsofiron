@@ -200,6 +200,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         SetCurrentDirectoryW(exePath);
     }
     
+    DWORD attr = GetFileAttributesW(L"web");
+    if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY)) {
+        SetCurrentDirectoryW(L"web");
+    }
+    
     if (!strstr(lpCmdLine, "--no-watch") && !strstr(lpCmdLine, "-nowatch")) {
         CreateThread(NULL, 0, Hoi4WatcherThread, NULL, 0, NULL);
     }
