@@ -1,3 +1,2 @@
 l_russian:
- DOOM_LOCALHOST_TT:0 "Запустить локальный DOOM (http://localhost:8000)\n§YТребуется запущенный start_server.bat§!"
- DOOM_ONLINE_TT:0 "Запустить онлайн DOOM через DOS.Zone"
+ DOOM_LOCALHOST_TT:0 "Запустить локальный DOOM (http://localhost:8000)\n§YТребуется запущенный server.exe§!"
