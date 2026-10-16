@@ -57,7 +57,7 @@ static int IsProcessRunning(const wchar_t *processName) {
 
 static DWORD WINAPI Hoi4WatcherThread(LPVOID param) {
     int started = 0;
-    for (int i = 0; i < 60; i++) {
+    for (int i = 0; i < 150; i++) {
         if (IsProcessRunning(L"hoi4.exe")) {
             started = 1;
             break;
@@ -201,7 +201,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         SetCurrentDirectoryW(exePath);
     }
     
-    if (strstr(lpCmdLine, "--watch") || strstr(lpCmdLine, "-w")) {
+    if (!strstr(lpCmdLine, "--no-watch") && !strstr(lpCmdLine, "-nowatch")) {
         CreateThread(NULL, 0, Hoi4WatcherThread, NULL, 0, NULL);
     }
     
