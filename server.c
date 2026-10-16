@@ -157,7 +157,6 @@ static DWORD WINAPI HandleClient(LPVOID param) {
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: %s\r\n"
         "Content-Length: %lld\r\n"
-        "Access-Control-Allow-Origin: *\r\n"
         "Cache-Control: no-cache, no-store, must-revalidate\r\n"
         "Pragma: no-cache\r\n"
         "Expires: 0\r\n"
@@ -215,9 +214,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         WSACleanup();
         return 1;
     }
-    
-    int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
     
     struct sockaddr_in address;
     memset(&address, 0, sizeof(address));
