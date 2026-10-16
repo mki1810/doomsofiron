@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0b0b0b;
+            color: #dcdcdc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        #topbar {
+            height: 42px;
+            background: #141414;
+            border-bottom: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            gap: 8px;
+            z-index: 10;
+        }
+        .wad-btns {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .btn {
+            background: #2a2a2a;
+            color: #ccc;
+            border: 1px solid #444;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.1s;
+            white-space: nowrap;
+        }
+        .btn:hover {
+            background: #3a3a3a;
+            color: #fff;
+            border-color: #666;
+        }
+        .btn:active, .btn.active {
+            background: #d32f2f;
+            color: #fff;
+            border-color: #f44336;
+        }
+        #key-indicator {
+            background: #080808;
+            color: #888;
+            font-family: monospace;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            white-space: nowrap;
+            min-width: 160px;
+            text-align: center;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.8);
+            transition: border-color 0.1s, color 0.1s;
+        }
+        .controls-hint {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            font-size: 11px;
+            color: #ccc;
+            white-space: nowrap;
+        }
+        .hint-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #1c1c1c;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 3px 7px;
+        }
+        .hint-item kbd {
+            background: #2a2a2a;
+            border: 1px solid #555;
+            border-bottom: 2px solid #666;
+            color: #ffd54f;
+            font-family: monospace;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 3px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.4);
+        }
+        .hint-label {
+            font-weight: 600;
+            font-size: 11px;
+        }
+        .hint-note {
+            color: #888;
+            font-size: 10px;
+            margin-left: 2px;
+        }
+        #viewport {
+            flex: 1;
+            width: 100%;
+            height: calc(100% - 42px);
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        #canvas {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+            outline: none;
+            cursor: crosshair;
+        }
+        #click-prompt {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            color: #ffcc80;
+            padding: 8px 14px;
+            border: 1px solid #ff9800;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="topbar">
+        <div class="wad-btns">
+            <button class="btn active" id="btn-fd1" onclick="selectGame('fd1')">Часть 1</button>
+            <button class="btn" id="btn-fd2" onclick="selectGame('fd2')">Часть 2</button>
+        </div>
+        <div id="key-indicator">⌨️ Готов к бою</div>
+        <div class="controls-hint">
+            <div class="hint-item"><kbd>Стрелки</kbd> <span class="hint-label" style="color:#e0e0e0;">Ходьба</span></div>
+            <div class="hint-item"><kbd>Ctrl</kbd> <span class="hint-label" style="color:#ff5252;">Огонь</span></div>
+            <div class="hint-item"><kbd>ПКМ</kbd> <span class="hint-label" style="color:#64b5f6;">Дверь</span></div>
+            <div class="hint-item"><kbd>Колёсико</kbd> <span class="hint-label" style="color:#ffd54f;">Смена оружия</span></div>
+            <div class="hint-item"><kbd>Tab</kbd> <span class="hint-label" style="color:#aaa;">Карта</span></div>
+        </div>
+    </div>
+
+    <div id="viewport">
+        <canvas id="canvas" tabindex="0" autofocus></canvas>
+        <div id="click-prompt">Кликните по экрану для старта игры и звука</div>
+    </div>
+
+    <script>
+    (function() {
+        const keyFixMap = {
+            87: { code: 'ArrowUp', key: 'ArrowUp', keyCode: 38 },
+            38: { code: 'ArrowUp', key: 'ArrowUp', keyCode: 38 },
+
+            83: { code: 'ArrowDown', key: 'ArrowDown', keyCode: 40 },
+            40: { code: 'ArrowDown', key: 'ArrowDown', keyCode: 40 },
+
+            65: { code: 'ArrowLeft', key: 'ArrowLeft', keyCode: 37 },
+            37: { code: 'ArrowLeft', key: 'ArrowLeft', keyCode: 37 },
+            75: { code: 'ArrowLeft', key: 'ArrowLeft', keyCode: 37 },
+
+            68: { code: 'ArrowRight', key: 'ArrowRight', keyCode: 39 },
+            39: { code: 'ArrowRight', key: 'ArrowRight', keyCode: 39 },
+            59: { code: 'ArrowRight', key: 'ArrowRight', keyCode: 39 },
+            186: { code: 'ArrowRight', key: 'ArrowRight', keyCode: 39 },
+
+            70: { code: 'ControlLeft', key: 'Control', keyCode: 17 },
+            90: { code: 'ControlLeft', key: 'Control', keyCode: 17 },
+            17: { code: 'ControlLeft', key: 'Control', keyCode: 17 },
+            224: { code: 'ControlLeft', key: 'Control', keyCode: 17 },
+
+            69: { code: 'Space', key: ' ', keyCode: 32 },
+            32: { code: 'Space', key: ' ', keyCode: 32 },
+
+            18: { code: 'AltLeft', key: 'Alt', keyCode: 18 },
+            16: { code: 'ShiftLeft', key: 'Shift', keyCode: 16 },
+
+            82: { code: 'Enter', key: 'Enter', keyCode: 13 },
+            13: { code: 'Enter', key: 'Enter', keyCode: 13 },
+
+            27: { code: 'Escape', key: 'Escape', keyCode: 27 },
+
+            9: { code: 'Tab', key: 'Tab', keyCode: 9 },
+
+            49: { code: 'Digit1', key: '1', keyCode: 49 },
+            50: { code: 'Digit2', key: '2', keyCode: 50 },
+            51: { code: 'Digit3', key: '3', keyCode: 51 },
+            52: { code: 'Digit4', key: '4', keyCode: 52 },
+            53: { code: 'Digit5', key: '5', keyCode: 53 },
+            54: { code: 'Digit6', key: '6', keyCode: 54 },
+            55: { code: 'Digit7', key: '7', keyCode: 55 },
+            97: { code: 'Digit1', key: '1', keyCode: 49 },
+            98: { code: 'Digit2', key: '2', keyCode: 50 },
+            99: { code: 'Digit3', key: '3', keyCode: 51 },
+            100: { code: 'Digit4', key: '4', keyCode: 52 },
+            101: { code: 'Digit5', key: '5', keyCode: 53 },
+            102: { code: 'Digit6', key: '6', keyCode: 54 },
+            103: { code: 'Digit7', key: '7', keyCode: 55 }
+        };
+
+        const ruToKey = {
+            'ц': 87, 'Ц': 87,
+            'ы': 83, 'Ы': 83,
+            'ф': 65, 'Ф': 65,
+            'в': 68, 'В': 68,
+            'у': 69, 'У': 69,
+            'е': 69, 'Е': 69,
+            'а': 70, 'А': 70,
+            'к': 82, 'К': 82
+        };
+
+        function patchEvent(e) {
+            let rawCode = e.keyCode || e.which || 0;
+            if (ruToKey[e.key]) {
+                rawCode = ruToKey[e.key];
+            }
+            const fix = keyFixMap[rawCode];
+            if (fix) {
+                try {
+                    Object.defineProperty(e, 'code', { get: () => fix.code, configurable: true });
+                    Object.defineProperty(e, 'key', { get: () => fix.key, configurable: true });
+                    Object.defineProperty(e, 'keyCode', { get: () => fix.keyCode, configurable: true });
+                    Object.defineProperty(e, 'which', { get: () => fix.keyCode, configurable: true });
+                } catch (err) {}
+            }
+        }
+
+        window.addEventListener('keydown', patchEvent, true);
+        window.addEventListener('keyup', patchEvent, true);
+    })();
+    </script>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var clickPrompt = document.getElementById('click-prompt');
+        var keyIndicator = document.getElementById('key-indicator');
+
+        var activeKeys = {
+            forward: false,
+            backward: false,
+            turnleft: false,
+            turnright: false,
+            fire: false,
+            use: false,
+            speed: false,
+            weapon: ''
+        };
+
+        var hudTimers = {};
+        function setHudState(key, isDown, minHoldMs) {
+            if (isDown) {
+                if (hudTimers[key]) clearTimeout(hudTimers[key]);
+                activeKeys[key] = true;
+                updateLiveHud();
+            } else {
+                if (hudTimers[key]) clearTimeout(hudTimers[key]);
+                hudTimers[key] = setTimeout(function() {
+                    activeKeys[key] = false;
+                    updateLiveHud();
+                }, minHoldMs || 180);
+            }
+        }
+
+        function updateLiveHud() {
+            if (!keyIndicator) return;
+            var parts = [];
+            if (activeKeys.forward) parts.push('▲ Вперед');
+            if (activeKeys.backward) parts.push('▼ Назад');
+            if (activeKeys.turnleft) parts.push('◀ Поворот');
+            if (activeKeys.turnright) parts.push('Поворот ▶');
+            if (activeKeys.fire) parts.push('🔥 ОГОНЬ');
+            if (activeKeys.use) parts.push('🚪 ДВЕРЬ');
+            if (activeKeys.speed) parts.push('⚡ Бег');
+            if (activeKeys.weapon) parts.push(activeKeys.weapon);
+
+            if (parts.length > 0) {
+                keyIndicator.textContent = parts.join(' | ');
+                keyIndicator.style.color = '#00e676';
+                keyIndicator.style.borderColor = '#00e676';
+            } else {
+                keyIndicator.textContent = '⌨️ Готов к бою';
+                keyIndicator.style.color = '#888';
+                keyIndicator.style.borderColor = '#333';
+            }
+        }
+
+        function sendSimulatedKey(type, code, key, keyCode) {
+            var ev = new KeyboardEvent(type, {
+                code: code,
+                key: key,
+                keyCode: keyCode,
+                which: keyCode,
+                bubbles: true
+            });
+            window.dispatchEvent(ev);
+        }
+
+        var selectedMode = 'fd1';
+        if (window.location.hash) {
+            var h = window.location.hash.substring(1);
+            if (h === 'fd1' || h === 'fd2') selectedMode = h;
+        }
+
+        document.getElementById('btn-fd1').classList.toggle('active', selectedMode === 'fd1');
+        document.getElementById('btn-fd2').classList.toggle('active', selectedMode === 'fd2');
+
+        function selectGame(mode) {
+            window.location.hash = mode;
+            window.location.reload();
+        }
+
+        var Module = {
+            canvas: canvas,
+            preRun: [function() {
+                if (selectedMode === 'fd2') {
+                    console.log('Preloading freedoom2.wad as /doom2.wad...');
+                    FS.createPreloadedFile('/', 'doom2.wad', 'freedoom2.wad', true, false);
+                } else {
+                    console.log('Preloading freedoom1.wad as /doom.wad...');
+                    FS.createPreloadedFile('/', 'doom.wad', 'freedoom1.wad', true, false);
+                }
+            }],
+            postRun: [function() {
+                console.log('Freedoom initialized successfully with factory defaults!');
+                if (canvas) canvas.focus();
+            }],
+            print: function(text) { console.log('[DOOM]', text); },
+            printErr: function(text) { console.warn('[DOOM]', text); }
+        };
+
+        window.addEventListener('click', function() {
+            if (canvas) canvas.focus();
+            if (clickPrompt) clickPrompt.style.opacity = '0';
+        });
+
+        canvas.addEventListener('mousedown', function(e) {
+            if (e.button === 0) {
+                setHudState('fire', true);
+                sendSimulatedKey('keydown', 'ControlLeft', 'Control', 17);
+            } else if (e.button === 2) {
+                setHudState('use', true);
+                sendSimulatedKey('keydown', 'Space', ' ', 32);
+            }
+        });
+        canvas.addEventListener('mouseup', function(e) {
+            if (e.button === 0) {
+                setHudState('fire', false, 120);
+                sendSimulatedKey('keyup', 'ControlLeft', 'Control', 17);
+            } else if (e.button === 2) {
+                setHudState('use', false, 150);
+                sendSimulatedKey('keyup', 'Space', ' ', 32);
+            }
+        });
+        window.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
+
+        function trackHud(e, isDown) {
+            var kc = e.keyCode || e.which || 0;
+            var c = e.code || '';
+
+            var gameKeyCodes = [9, 13, 16, 17, 18, 27, 32, 37, 38, 39, 40, 49, 50, 51, 52, 53, 54, 55, 56, 57, 65, 68, 69, 70, 82, 83, 87, 90, 97, 98, 99, 100, 101, 102, 103];
+            if (gameKeyCodes.includes(kc) || ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'].includes(c)) {
+                e.preventDefault();
+            }
+
+            if (kc === 38 || c === 'ArrowUp') setHudState('forward', isDown, 190);
+            else if (kc === 40 || c === 'ArrowDown') setHudState('backward', isDown, 190);
+            else if (kc === 37 || c === 'ArrowLeft') setHudState('turnleft', isDown, 160);
+            else if (kc === 39 || c === 'ArrowRight') setHudState('turnright', isDown, 160);
+            else if (kc === 17 || c === 'ControlLeft') setHudState('fire', isDown, 120);
+            else if (kc === 32 || c === 'Space') setHudState('use', isDown, 150);
+            else if (kc === 16 || c === 'ShiftLeft') setHudState('speed', isDown, 180);
+
+            if (kc >= 49 && kc <= 55 && isDown) {
+                var wpnList = {49:'Кастет/Пила', 50:'Пистолет', 51:'Дробовик', 52:'Пулемет', 53:'Ракетница', 54:'Плазма', 55:'BFG9000'};
+                activeKeys.weapon = '🔫 ' + (wpnList[kc] || (kc - 48));
+                updateLiveHud();
+                if (window._wpnTimer) clearTimeout(window._wpnTimer);
+                window._wpnTimer = setTimeout(function() { activeKeys.weapon = ''; updateLiveHud(); }, 1400);
+            }
+        }
+
+        window.addEventListener('keydown', function(e) { trackHud(e, true); }, false);
+        window.addEventListener('keyup', function(e) { trackHud(e, false); }, false);
+        window.addEventListener('blur', function() {
+            for (var k in activeKeys) activeKeys[k] = false;
+            for (var t in hudTimers) clearTimeout(hudTimers[t]);
+            updateLiveHud();
+        });
+
+        var wpnList = {1:'Кастет/Пила', 2:'Пистолет', 3:'Дробовик', 4:'Пулемет', 5:'Ракетница', 6:'Плазма', 7:'BFG9000'};
+        var curWpn = 2;
+        window.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (e.deltaY > 0) curWpn = (curWpn % 7) + 1;
+            else curWpn = (curWpn <= 1) ? 7 : curWpn - 1;
+            sendSimulatedKey('keydown', 'Digit' + curWpn, '' + curWpn, 48 + curWpn);
+            activeKeys.weapon = '🔫 ' + (wpnList[curWpn] || curWpn);
+            updateLiveHud();
+            setTimeout(function() {
+                sendSimulatedKey('keyup', 'Digit' + curWpn, '' + curWpn, 48 + curWpn);
+                if (window._wpnTimer) clearTimeout(window._wpnTimer);
+                window._wpnTimer = setTimeout(function() { activeKeys.weapon = ''; updateLiveHud(); }, 1400);
+            }, 90);
+        }, { passive: false });
+    </script>
+    <script async src="doomgeneric.js?v=20261016_08"></script>
+</body>
+</html>

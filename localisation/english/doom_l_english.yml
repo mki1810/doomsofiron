@@ -1,0 +1,3 @@
+l_english:
+ DOOM_LOCALHOST_TT:0 "Run local DOOM (http://localhost:8000)\n§YRequires start_server.bat running§!"
+ DOOM_ONLINE_TT:0 "Run online DOOM via DOS.Zone"
