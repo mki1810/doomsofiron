@@ -16,11 +16,11 @@
 * **Авторское право:** © 2001-2024 Авторы проекта Freedoom (см. `FREEDOOM-CREDITS.txt`).
 * **Официальный сайт:** https://freedoom.github.io/
 
-### 3. Ресурсы оригинального DOOM 1 (Shareware Episode 1: Knee-Deep in the Dead)
-* **Файл:** `licenses/DOOM-SHAREWARE-LICENSE.txt`
-* **Лицензия:** id Software 1993 Shareware License (Association of Shareware Professionals).
-* **Авторское право:** © 1993 id Software, LLC.
-* **Условия:** Разрешено свободное некоммерческое копирование и распространение оригинального файла `DOOM1.WAD` в неизменном виде без взимания платы за саму интеллектуальную собственность.
+### 3. DOOM1.WAD (Shareware, эпизод 1)
+* **Файл:** `licenses/DOOM1-README.txt` (readme из DOOM v1.9, не лицензия)
+* **Права:** © 1993 id Software; сейчас принадлежат Bethesda
+* **Статус:** Включён без изменений. В 1999 году Джон Кармак письменно подтвердил, что shareware-WAD "freely distributable". Это не формальная лицензия, и разрешения от текущего правообладателя у мода нет.
+* **Отказ от ответственности:** Мод неофициальный и не связан с id Software, Bethesda и Paradox Interactive.
 
 ### 4. Скрипты интеграции HOI4 и локальный микросервер
 * **Файлы:** `server.c`, `interface/`, `common/`, `events/`
